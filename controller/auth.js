@@ -4,6 +4,7 @@ const otpGenerator = require("otp-generator");
 const profile = require("../model/profile");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const nodemailer = require("nodemailer");
 require("dotenv").config();
 
 
@@ -189,7 +190,7 @@ exports.login = async (req,res) => {
             const payload = {
                 email : user.email,
                 id : user._id,
-                role : user.role
+                accountType : user.accountType
             }
 
             const token = jwt.sign(payload,process.env.JWT_SECRET ,{
@@ -231,3 +232,79 @@ exports.login = async (req,res) => {
 
 // change password
 
+exports.changePassword = async (req,res) => {
+    try{
+        //get data from body
+        const userDetail = await USER.findById(req.user.id)
+        // get oldPasword, newPassword, confirmPassword
+        const {oldPassword, newPassword, confirmPassword} = req.body
+
+        // validation
+        const isPasswordSame = await bcrypt.compare(
+            oldPassword,
+            userDetail.password
+        )
+        if(!isPasswordSame){
+            return res.status(403).json({
+                success : false,
+                message : 'Please enter same password'
+            });
+        }
+
+        if (newPassword !== confirmPassword) {
+            return res.status(400).json({
+                success: false,
+                message: "New password and confirm password do not match"
+            });
+        }
+
+        // update password in DP
+
+        const encryptedPassword = await bcrypt.hash(newPassword,10);
+        const updatedPassword = await USER.findByIdAndUpdate(
+            req.user.id,
+            {password : encryptedPassword} ,
+            {new : true}
+        )
+        
+        // send e-mail 
+        try{
+            const transporter = nodemailer.createTransport({
+                host : process.env.MAIL_HOST,
+                auth : {
+                    user: process.env.MAIL_USER,
+                    pass : process.env.MAIL_PASSWORD,
+                },
+            });
+
+            const emailResult = await transporter.sendMail({
+                from: `"Study-Notion" <${process.env.MAIL_USER}>`,
+                to: updatedPassword.email,
+                subject: 'PASSWORD UPDATED SUCCESSFULLY',
+                html: `Password updated successfully for ${updatedPassword.firstName} ${updatedPassword.lastName}`
+            });
+            console.log("email sent : ", emailResult);
+        }
+        catch(error){
+            console.log("Error occured in sending email");
+            return res.status(500).json({
+                success : false,
+                message : "email cant send"
+            });
+        }
+
+        // return response
+        return res.status(200).json({
+            success : true,
+            message : 'Password Updated successfully'
+        });
+
+    }
+    catch(error){
+        console.log(error)
+        return res.status(500).json({
+            success : false,
+            message : "password can't be changed"
+        })
+    }
+}

@@ -1,3 +1,4 @@
+const { ExplainVerbosity } = require("mongodb");
 const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema({
@@ -43,6 +44,12 @@ const userSchema = new mongoose.Schema({
     Image : {
         type : String,
         required : true
+    },
+    token : {
+        type : String
+    },
+    resetPasswordExpires : {
+        type : Date
     },
     courseProgress : [
         {

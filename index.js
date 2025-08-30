@@ -12,4 +12,4 @@ dbConnect();
 
 app.listen(PORT,()=>{
     console.log(`Server Starting at Port ${PORT}`)  
-})
+});
