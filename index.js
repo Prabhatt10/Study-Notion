@@ -11,5 +11,5 @@ const dbConnect = require('./config/database.js');
 dbConnect();
 
 app.listen(PORT,()=>{
-    console.log(`Server Starting at Port ${PORT}`)  
+    console.log(`Server Starting at Port ${PORT}`);  
 });
