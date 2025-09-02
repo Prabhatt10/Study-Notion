@@ -1,6 +1,7 @@
 const SUBSECTION = require("../model/subSection");
 const SECTION = require("../model/section");
 const { videoUploadToCloudinary } = require("../util/imageUploader");
+const subSection = require("../model/subSection");
 
 
 // create subsection
