@@ -97,7 +97,7 @@ exports.getAllCourse = async (req,res) => {
                                                 instructor:true,
                                                 ratingAndReview,
                                                 studentsEnrolled
-                                            }).populste("instructor");
+                                            }).populate("instructor");
     
         return res.status(200).json({
             success:true,
@@ -108,6 +108,59 @@ exports.getAllCourse = async (req,res) => {
         return res.status(500).json({
             success : false,
             essage : 'cannot get all courses, Please try again'
+        });
+    }
+}
+
+// get all content of the course
+
+exports.getCourseDetails = async (req,res) => {
+    try {
+
+        // get id
+        const {courseID} = req.body;
+        // find course details
+        const courseDetails = await COURSE.find(
+            {_id : courseID}
+            .populate (
+                {
+                    path : "instructor",
+                    populate : {
+                        path :"additionalDetail"
+                    }
+                }
+            )
+            .populate("category")
+            .populate("ratingAndReviews")
+            .populate({
+                path :"courseContent",
+                populate : {
+                    path : ("sub")
+                }
+            })
+
+        ).exec();
+
+        // validation
+        if(!courseDetails){
+            return res.status(400).json({
+                success : false,
+                message :`Could not find the course with ${courseID}`
+            });
+        }
+
+        return res.status(200).json({
+            success : true,
+            message : 'Course Detailed fetched successfully',
+            data : courseDetails
+        })
+
+    }
+    catch(error) {
+        console.log(error);
+        return res.status(500).json({
+            success : false,
+            message : error.message
         });
     }
 }
